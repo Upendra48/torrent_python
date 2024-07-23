@@ -3,7 +3,7 @@ import tracker
 
 def main():
     # Open and decode the torrent file
-    torrent = torrent_parser.open('catpicture_0002_archive.torrent')
+    torrent = torrent_parser.open_torrent('catpicture_0002_archive.torrent')
 
     # Get peers from the tracker
     def print_peers(peers):

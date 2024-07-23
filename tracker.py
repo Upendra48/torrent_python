@@ -4,7 +4,7 @@ import socket
 import struct
 from urllib.parse import urlparse
 
-from python.torrent_python import torrent_parser
+import torrent_parser
 
 def get_peers(torrent, callback):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,7 +19,7 @@ def get_peers(torrent, callback):
             # 2. Receive and parse connect response
             conn_resp = parse_conn_resp(response)
             # 3. Send announce request
-            announce_req = build_announce_req(conn_resp['connection_id'])
+            announce_req = build_announce_req(conn_resp['connection_id'],torrent)
             udp_send(sock, announce_req, url)
         elif resp_type(response) == 'announce':
             # 4. Parse announce response
@@ -36,7 +36,13 @@ def udp_send(sock, message, url, callback=lambda: None):
     callback()
 
 def resp_type(resp):
-
+    action = struct.unpack('>I', resp[:4])[0]
+    if action == 0:
+        return 'connect'
+    elif action == 1:
+        return 'announce'
+    else:
+        return 'unknown'
 
 def build_conn_req():
      # Create a buffer with a size of 16 bytes
@@ -82,7 +88,7 @@ def build_announce_req(conn_id, torrent, port=6881):
     buf[16:36] = torrent_parser.info_hash(torrent)
 
     # Peer ID
-    buf[36:56] = util.Util.gen_id()
+    buf[36:56] = os.urandom(20)
 
     # Downloaded
     buf[56:64] = b'\x00' * 8
